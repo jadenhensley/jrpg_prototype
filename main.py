@@ -13,19 +13,25 @@ PROJECT_PATH = path_util.get_project_directory()
 
 monogram = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 54)
 monogramLarge = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 102)
-
+monogramXL = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 158)
 
 
 mixer = pygame.mixer
 mixer.music.load(f"{PROJECT_PATH}/audio/mysterious_dungeon.wav")
 mixer.music.set_volume(0.05)
 music_playing = 0
+game_paused = 0
+
 
 floor_image = pygame.image.load(f"{PROJECT_PATH}/sprites/level/floor.png")
 floor_image = pygame.transform.scale(floor_image, (floor_image.get_width()*100, floor_image.get_height()*100))
 
 def printg(text, x, y, color=(255,255,255)):
     text = monogram.render(text, True, color)
+    screen.blit(text, (x, y))
+
+def printgLarge(text, x, y, color=(255,255,255)):
+    text = monogramXL.render(text, True, color)
     screen.blit(text, (x, y))
 
 bgv = 20
@@ -72,7 +78,6 @@ class Knight(pygame.sprite.Sprite):
         self.last_pause = 0
     
     def update(self, surface):
-        print(self.paused)  
         if self.paused:
             self.transparent.set_alpha(150)
             screen.blit(self.transparent, (0, 0))
@@ -306,7 +311,7 @@ class Game():
 
 
     def game(self):
-        global music_playing, bgv, fgv
+        global music_playing, game_paused, bgv, fgv
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
@@ -353,8 +358,13 @@ class Game():
                 if event.key == pygame.K_RETURN:
                     if knight.paused == True:
                         knight.paused = False
+                        knight.last_pause = pygame.time.get_ticks()
+                        knight.paused = False
+                        game_paused = False
                     if knight.paused == False:
-                        knight.paused = True
+                        if pygame.time.get_ticks() > knight.last_pause+360 and pygame.time.get_ticks() > 2000:
+                            knight.paused = True
+                            game_paused = True
 
         if knight.rect.left < -100:
             knight.rect.left = -100
@@ -379,7 +389,12 @@ class Game():
 
         playerGroup.draw(screen)
         playerGroup.update(screen)
-        printg("game", sWidth-270, 0, (255, 0, 0))
+
+        if not knight.paused:
+            printg("game", sWidth-270, 0, (255, 0, 0))
+        else:
+            printgLarge("Options Menu", sWidth//4, 0, (0, 255, 0))
+
         clock.tick(60)
         pygame.display.flip()
 
