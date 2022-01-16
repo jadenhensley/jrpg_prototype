@@ -1,6 +1,6 @@
 import path_util
-PROJECT_PATH = path_util.get_project_directory()
 
+PROJECT_PATH = path_util.get_project_directory()
 animations = {
     "knight": {
         "idle":    [

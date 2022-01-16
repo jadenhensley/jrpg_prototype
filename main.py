@@ -1,6 +1,7 @@
 from turtle import update
 import pygame, sys, random, path_util
 from anim_data import animations
+from monsters_data import monsters
 
 pygame.init()
 pygame.font.init()
@@ -9,7 +10,7 @@ clock = pygame.time.Clock()
 sWidth, sHeight = 720, 480
 sWidth, sHeight = 1280, 720
 screen = pygame.display.set_mode((sWidth, sHeight))
-pygame.display.set_caption("roguelike/RPG project prototype")
+pygame.display.set_caption("Turn based JRPG prototype")
 PROJECT_PATH = path_util.get_project_directory()
 
 monogram = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 54)
@@ -216,9 +217,27 @@ class Knight(pygame.sprite.Sprite):
             self.image = pygame.transform.flip(self.image, True, False)
         
 
-class Wizard(pygame.sprite.Sprite):
+class Dragon(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
+        self.name = random.choice(("dragon0","dragon1","dragon2","dragon3","dragon4","dragon5","dragon6","dragon7","dragon8","dragon9","dragon10"))
+        self.image = pygame.image.load(monsters[self.name]["sprite"])
+        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (self.image.get_width()*4, self.image.get_height()*4))
+        self.image = pygame.transform.flip(self.image, True, False)
+        self.hp = monsters[self.name]["stats"]["hp"]
+        self.sp = monsters[self.name]["stats"]["sp"]
+        self.attack = monsters[self.name]["stats"]["attack"]
+        self.defense = monsters[self.name]["stats"]["defense"]
+
+    def update(self, surface):
+        self.rect.right = sWidth - 450
+        self.rect.bottom = 200
+        current_time = pygame.time.get_ticks()
+        printg(f"tick: {current_time}",0,0)
+        if current_time % 100 == 0:
+            knight.hp -= random.randint(4, self.attack)
+        
 
 class FlyingEye(pygame.sprite.Sprite):
     def __init__(self):
@@ -380,7 +399,7 @@ class Game():
 
     def battle(self):
         global music_playing, game_paused
-        player_commands = ["attack", "guard", "negotiate"]
+        player_commands = ["attack", "heal", "negotiate"]
         
         screen.fill((20,20,20))
         for cmd in range(len(player_commands)):
@@ -419,24 +438,31 @@ class Game():
                 if event.key == pygame.K_RETURN:
                     if player_commands[self.menu_option] == "attack":
                         knight.current_animation = "attackA"
-                    elif player_commands[self.menu_option] == "guard":
+                        dragon.hp -= random.randint(2, knight.attack)
+                    elif player_commands[self.menu_option] == "heal":
                         knight.current_animation = "roll"
+                        knight.hp += random.randint(1, knight.defense)
                     elif player_commands[self.menu_option] == "negotiate":
                         knight.current_animation = "attackB"
+                        dragon.hp -= random.randint(1, knight.attack // 2)
+                        
         
         knight.in_menu = True
         knight.direction = "right"
         knight.rect.left = -200
         knight.rect.top = -150
-        eyeEnemy.rect.left = 100
-        eyeEnemy.rect.top = 100
 
         printg(f"Player HP: {knight.hp}", sWidth // 4, sHeight - 100, (255,0,0))
         printg(f"Player SP: {knight.sp}", sWidth // 4, sHeight - 50, (0,255,0))
+        printg(f"Enemy HP: {dragon.hp}", sWidth // 2 + 30, sHeight - 100, (255,0,0))
+        printg(f"Enemy SP: {dragon.sp}", sWidth // 2 + 30, sHeight - 50, (0,255,0))
+
 
         playerGroup.draw(screen)
         playerGroup.update(screen)
         eyeEnemy.update(screen)
+        eGroup.draw(screen)
+        eGroup.update(screen)
         clock.tick(60)
         pygame.display.flip()
 
@@ -573,8 +599,9 @@ cursorGroup = pygame.sprite.Group()
 
 projectile = EyeProjectile()
 knight = Knight()
-eGroup.add(FlyingEye())
 eyeEnemy = FlyingEye()
+dragon = Dragon()
+eGroup.add(dragon)
 # eGroup.add(projectile)
 # eGroup.add(knight)
 playerGroup.add(knight)
