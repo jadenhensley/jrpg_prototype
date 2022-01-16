@@ -1,7 +1,7 @@
 # JRPG Prototype
 
-<img src="" width=300 height=150>
-<img src="" width=300 height=150>
+<img src="https://github.com/jadenhensley/jrpg_prototype/blob/main/screenshots/screenshot0.PNG" width=300 height=150>
+<img src="https://github.com/jadenhensley/jrpg_prototype/blob/main/screenshots/screenshot1.PNG" width=300 height=150>
 
 # What is it?
 A simple JRPG prototype I made over the weekend. 
