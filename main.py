@@ -58,6 +58,7 @@ class Knight(pygame.sprite.Sprite):
         self.velocity = 0
         self.direction = "right"
         self.in_menu = False
+        self.paused = False
         # button states
         self.LEFT = False
         self.UP = False
@@ -67,10 +68,19 @@ class Knight(pygame.sprite.Sprite):
         self.ACTIONB = False
         self.ROLL = False
         self.RUN = False
+        self.transparent = pygame.Surface((sWidth, sHeight))
+        self.last_pause = 0
     
     def update(self, surface):
-        self.movement_state_machine()
-        self.anim_state_machine(surface)
+        print(self.paused)  
+        if self.paused:
+            self.transparent.set_alpha(150)
+            screen.blit(self.transparent, (0, 0))
+        
+        # pygame.draw.circle(transparent, (30,30,30), (0, 0), 20)
+        if not self.paused:
+            self.movement_state_machine()
+            self.anim_state_machine(surface)
 
 
     def movement_state_machine(self):
@@ -145,6 +155,7 @@ class Knight(pygame.sprite.Sprite):
             self.current_image += 0.2
         if self.direction == "left":
             self.image = pygame.transform.flip(self.image, True, False)
+        
 
 class Wizard(pygame.sprite.Sprite):
     def __init__(self):
@@ -184,8 +195,8 @@ class Wall(pygame.sprite.Sprite):
     def __init__(self, x=random.randint(0, sHeight), y=random.randint(0, sWidth)):
         super().__init__()
         self.image = pygame.image.load(f"{PROJECT_PATH}/sprites/level/border.png")
-        self.rect = self.image.get_rect()
         self.image = pygame.transform.scale(self.image, (self.image.get_width()*3, self.image.get_height()*3))
+        self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
         self.current_image = 0
@@ -339,7 +350,12 @@ class Game():
                     knight.UP = False
                 if event.key == pygame.K_DOWN:
                     knight.DOWN = False
-        
+                if event.key == pygame.K_RETURN:
+                    if knight.paused == True:
+                        knight.paused = False
+                    if knight.paused == False:
+                        knight.paused = True
+
         if knight.rect.left < -100:
             knight.rect.left = -100
         if knight.rect.right > sWidth - 200:
@@ -350,15 +366,13 @@ class Game():
             knight.rect.bottom = sHeight - 200
 
         knight.in_menu = False
-
-        print(knight.RIGHT)
         
         bgv += 0.5
         fgv -= 0.1
-        # screen.fill((int(bgv),int(bgv),int(bgv)))
         # pygame.draw.circle(screen, ((int(fgv),int(fgv),int(fgv))), (200, 200), int(fgv))
         screen.fill((20,20,20))
         screen.blit(floor_image, (0,0))
+        # screen.fill((int(bgv),int(bgv),int(bgv)))
         knight.update(screen)
         objGroup.draw(screen)
         objGroup.update(screen)
