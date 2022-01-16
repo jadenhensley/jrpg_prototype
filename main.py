@@ -231,6 +231,7 @@ class Game():
         screen.fill((20,20,20))
         printg("debug/testing", sWidth-270, 0, (0,255,0))
         printg("enter to cycle animations", 500, 400, (0,180,0))
+        printg("tab to main menu", 500, 600, (0,180,0))
 
         eGroup.draw(screen)
         eGroup.update(screen)
@@ -265,8 +266,7 @@ class Game():
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_TAB:
-                    self.current_scene = "game"
+                pass
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
                     knight.current_animation = "roll"
@@ -277,6 +277,7 @@ class Game():
                     if self.menu_option != 0:
                         self.menu_option -= 1
                 if event.key == pygame.K_RETURN:
+                    knight.last_pause = pygame.time.get_ticks()
                     self.current_scene = options[self.menu_option]
 
         screen.fill((20,20,20))
@@ -312,6 +313,8 @@ class Game():
 
     def game(self):
         global music_playing, game_paused, bgv, fgv
+
+        options_menu = ["resume", "main menu", "settings", "quit"]
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
@@ -353,9 +356,22 @@ class Game():
                     knight.LEFT = False
                 if event.key == pygame.K_UP:
                     knight.UP = False
+                    if knight.paused:
+                        if self.menu_option != 0:
+                            self.menu_option -= 1
                 if event.key == pygame.K_DOWN:
                     knight.DOWN = False
+                    if knight.paused:
+                        if self.menu_option != len(options_menu)-1:
+                            self.menu_option += 1
                 if event.key == pygame.K_RETURN:
+                    if options_menu[self.menu_option] == "quit":
+                        pygame.quit()
+                        sys.exit()
+                    if options_menu[self.menu_option] == "settings":
+                        self.current_scene = "settings"
+                    if options_menu[self.menu_option] == "main menu":
+                        self.current_scene = "menu"
                     if knight.paused == True:
                         knight.paused = False
                         knight.last_pause = pygame.time.get_ticks()
@@ -393,7 +409,12 @@ class Game():
         if not knight.paused:
             printg("game", sWidth-270, 0, (255, 0, 0))
         else:
-            printgLarge("Options Menu", sWidth//4, 0, (0, 255, 0))
+            printgLarge("Game Paused", sWidth//4-30, 0, (0, 255, 0))
+            for item in range(len(options_menu)):
+                if self.menu_option == item:
+                    printg(options_menu[item], sWidth // 2, item*100+200, (0, 255, 0))
+                else:
+                    printg(options_menu[item], sWidth // 2, item*100+200, (0, 0, 0))
 
         clock.tick(60)
         pygame.display.flip()
