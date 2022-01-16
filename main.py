@@ -69,7 +69,9 @@ class Knight(pygame.sprite.Sprite):
         self.RUN = False
     
     def update(self, surface):
+        self.movement_state_machine()
         self.anim_state_machine(surface)
+
 
     def movement_state_machine(self):
         if self.LEFT:
@@ -141,6 +143,8 @@ class Knight(pygame.sprite.Sprite):
             else:
                 self.image = pygame.transform.scale(self.image, (self.image.get_width()*8, self.image.get_height()*8))
             self.current_image += 0.2
+        if self.direction == "left":
+            self.image = pygame.transform.flip(self.image, True, False)
 
 class Wizard(pygame.sprite.Sprite):
     def __init__(self):
@@ -299,9 +303,6 @@ class Game():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYUP:
-                if event.key == pygame.K_TAB:
-                    self.current_scene = "debug"
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_z:
                     knight.current_animation = "attackA"
@@ -309,21 +310,48 @@ class Game():
                     knight.current_animation = "attackB"
                 elif event.key == pygame.K_c:
                     knight.current_animation = "roll"
+                    if knight.direction == "right":
+                        knight.rect.right += 150
+                    if knight.direction == "left":
+                        knight.rect.left -= 150
                 elif event.key == pygame.K_RIGHT:
+                    knight.RIGHT, knight.LEFT = True, False
                     knight.current_animation = "run"
-                    knight.rect.right += 100
+                    knight.direction = "right"
                 elif event.key == pygame.K_LEFT:
+                    knight.LEFT, knight.RIGHT = True, False
                     knight.current_animation = "run"
-                    knight.rect.left -= 100
+                    knight.direction = "left"
                 elif event.key == pygame.K_DOWN:
+                    knight.DOWN, knight.UP = True, False
                     knight.current_animation = "run"
-                    knight.rect.bottom += 100
                 elif event.key == pygame.K_UP:
+                    knight.UP, knight.DOWN = True, False
                     knight.current_animation = "run"
-                    knight.rect.top -= 100
-
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_TAB:
+                    self.current_scene = "debug"
+                if event.key == pygame.K_RIGHT:
+                    knight.RIGHT = False
+                if event.key == pygame.K_LEFT:
+                    knight.LEFT = False
+                if event.key == pygame.K_UP:
+                    knight.UP = False
+                if event.key == pygame.K_DOWN:
+                    knight.DOWN = False
+        
+        if knight.rect.left < -100:
+            knight.rect.left = -100
+        if knight.rect.right > sWidth - 200:
+            knight.rect.right = sWidth - 200
+        if knight.rect.top < -100:
+            knight.rect.top = -100
+        if knight.rect.bottom > sHeight - 200:
+            knight.rect.bottom = sHeight - 200
 
         knight.in_menu = False
+
+        print(knight.RIGHT)
         
         bgv += 0.5
         fgv -= 0.1
