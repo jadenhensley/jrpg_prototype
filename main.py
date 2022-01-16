@@ -1,3 +1,4 @@
+from turtle import update
 import pygame, sys, random, path_util
 from anim_data import animations
 
@@ -15,13 +16,15 @@ monogram = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 54)
 monogramLarge = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 102)
 monogramXL = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 158)
 
+pygame.mouse.set_visible(False)
+
 
 mixer = pygame.mixer
 mixer.music.load(f"{PROJECT_PATH}/audio/mysterious_dungeon.wav")
 mixer.music.set_volume(0.05)
 music_playing = 0
 game_paused = 0
-
+debug_enabled = 0
 
 floor_image = pygame.image.load(f"{PROJECT_PATH}/sprites/level/floor.png")
 floor_image = pygame.transform.scale(floor_image, (floor_image.get_width()*100, floor_image.get_height()*100))
@@ -53,6 +56,50 @@ for layer in parallax_background:
             converted_layers.append(temp)
 
 
+class EnemyShadow():
+    def __init__(self):
+        self.shadowSurface = pygame.surface.Surface((50,50))
+        self.shadowRect = pygame.rect.Rect(0, 0, 50,50)
+        self.shadowSurface.set_alpha(150)
+        
+    def update(self):
+        pygame.draw.rect(self.shadowSurface, (20,20,20), self.shadowRect)
+        screen.blit(self.shadowSurface, (0, 0))
+        self.shadowRect.bottom += 10
+
+class HealthBar(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.hbRect = pygame.rect.Rect(x, y, 302, 52)
+        # backdrop for healthbar
+        self.bdRect = pygame.rect.Rect(x, y, 310, 60)
+        self.percentage = 1.00
+
+    def update(self, surface):
+        self.hbRect = pygame.rect.Rect(self.x, self.y, 50, 300*self.percentage)
+        pygame.draw.rect(screen, (15,15,15), self.bdRect)
+        pygame.draw.rect(screen, (255,0,0), self.hbRect)
+
+    def change_percentage(self, value):
+        self.percentage = value
+
+
+class Mouse(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        cursorIMG = pygame.image.load(f"{PROJECT_PATH}/sprites/cursor/cursor.png")
+        self.cursorIMG = pygame.transform.scale(cursorIMG, (cursorIMG.get_width()*2, cursorIMG.get_height()*2))
+        hoverIMG = pygame.image.load(f"{PROJECT_PATH}/sprites/cursor/cursorHover.png")
+        self.hoverIMG = pygame.transform.scale(hoverIMG, (hoverIMG.get_width()*2, hoverIMG.get_height()*2))
+        
+        self.image=self.cursorIMG
+        self.rect = self.image.get_rect()
+    
+    def update(self, surface):
+        pos = pygame.mouse.get_pos()
+        screen.blit(self.image, (pos[0], pos[1]))
+
 class Knight(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
@@ -76,13 +123,20 @@ class Knight(pygame.sprite.Sprite):
         self.RUN = False
         self.transparent = pygame.Surface((sWidth, sHeight))
         self.last_pause = 0
-    
+        self.hp = 84
+        self.sp = 42
+        self.attack = 9
+        self.defense = 30
+
     def update(self, surface):
         if self.paused:
             self.transparent.set_alpha(150)
             screen.blit(self.transparent, (0, 0))
         
         # pygame.draw.circle(transparent, (30,30,30), (0, 0), 20)
+
+        # pygame.draw.circle(screen, (30,30,30), (self.rect.x, self.rect.y), 10)
+        
         if not self.paused:
             self.movement_state_machine()
             self.anim_state_machine(surface)
@@ -180,6 +234,8 @@ class FlyingEye(pygame.sprite.Sprite):
         self.image = pygame.image.load(animations["flyingeye"]["chasing"][int(self.current_image)])
         self.image = pygame.transform.scale(self.image, (self.image.get_width()*3, self.image.get_height()*3))
         self.current_image += 0.2
+        self.right = 300
+        self.top = 300
 
 class EyeProjectile(pygame.sprite.Sprite):
     def __init__(self):
@@ -188,16 +244,21 @@ class EyeProjectile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.image = pygame.transform.scale(self.image, (self.image.get_width(), self.image.get_height()))
         self.current_image = 0
+        self.in_menu = False
 
     def update(self, surface):
         if self.current_image > len(animations["flyingeye"]["projectile"]):
             self.current_image = 0
         self.image = pygame.image.load(animations["flyingeye"]["projectile"][int(self.current_image)])
-        self.image = pygame.transform.scale(self.image, (self.image.get_width()*3, self.image.get_height()*3))
+        if not self.in_menu:
+            self.image = pygame.transform.scale(self.image, (self.image.get_width()*3, self.image.get_height()*3))
+        else:
+            self.image = pygame.transform.scale(self.image, (self.image.get_width()*6, self.image.get_height()*6))
         self.current_image += 0.2
 
 class Wall(pygame.sprite.Sprite):
-    def __init__(self, x=random.randint(0, sHeight), y=random.randint(0, sWidth)):
+    # def __init__(self, x=random.randint(0, sHeight), y=random.randint(0, sWidth)):
+    def __init__(self, x=100, y=100):
         super().__init__()
         self.image = pygame.image.load(f"{PROJECT_PATH}/sprites/level/border.png")
         self.image = pygame.transform.scale(self.image, (self.image.get_width()*3, self.image.get_height()*3))
@@ -206,10 +267,14 @@ class Wall(pygame.sprite.Sprite):
         self.rect.y = y
         self.current_image = 0
 
-class HealthBar():
-    def __init__(self):
-        self.percent = 100
-    
+    def update(self, surface):
+        for i in range(10):
+            screen.blit(self.image, (i*self.image.get_width(), 0))
+            screen.blit(self.image, (i*self.image.get_width(), sHeight-self.image.get_height()))
+        # collision, doesn't work
+        # pygame.draw.circle(screen, (255,0,0), (self.rect.x, self.rect.y), 10)
+        # if self.rect.bottom < knight.rect.top:
+        #     knight.rect.top = self.rect.bottom
 
 class Game():
     def __init__(self):
@@ -252,8 +317,8 @@ class Game():
             self.game()
         elif self.current_scene == "settings":
             self.menu()
-        elif self.current_scene == "combat":
-            self.combat()
+        elif self.current_scene == "battle":
+            self.battle()
 
     def menu(self):
         global music_playing; music_playing = 0; mixer.music.stop()
@@ -290,8 +355,9 @@ class Game():
         screen.blit(converted_layers[4], (0,0))
 
         
-
-        printg("main menu", sWidth // 2, 0, (255,0,0))
+        printgLarge("RPG Prototype", sWidth // 4 - 30, -10, (255,255,255))
+        printgLarge("RPG Prototype", sWidth // 4 - 30, 0, (0,255,0))
+        printg("included in demo: Overworld + Battle + Debug", sWidth // 4 - 100, 150, (0, 0, 0))
         
         playerGroup.draw(screen)
         playerGroup.update(screen)
@@ -310,11 +376,76 @@ class Game():
         clock.tick(60)
         pygame.display.flip()
 
+    
+
+    def battle(self):
+        global music_playing, game_paused
+        player_commands = ["attack", "guard", "negotiate"]
+        
+        screen.fill((20,20,20))
+        for cmd in range(len(player_commands)):
+            if cmd != self.menu_option:
+                printg(player_commands[cmd], sWidth // 4 + 250*cmd, 550, (255,255,255))
+            else:
+                printg(player_commands[cmd], sWidth // 4 + 250*cmd, 550, (0, 255, 0))
+            
+        if music_playing == 0:
+            mixer.music.play()
+            music_playing = 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    knight.DOWN, knight.UP = True, False
+                    knight.current_animation = "roll"
+                elif event.key == pygame.K_UP:
+                    knight.UP, knight.DOWN = True, False
+                    knight.current_animation = "run"
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_TAB:
+                    self.current_scene = "debug"
+                if event.key == pygame.K_RIGHT:
+                    if self.menu_option != len(player_commands)-1:
+                        self.menu_option += 1
+                if event.key == pygame.K_LEFT:
+                    if self.menu_option != 0:
+                        self.menu_option -= 1
+                if event.key == pygame.K_UP:
+                    pass
+                if event.key == pygame.K_DOWN:
+                    knight.DOWN = False
+                if event.key == pygame.K_RETURN:
+                    if player_commands[self.menu_option] == "attack":
+                        knight.current_animation = "attackA"
+                    elif player_commands[self.menu_option] == "guard":
+                        knight.current_animation = "roll"
+                    elif player_commands[self.menu_option] == "negotiate":
+                        knight.current_animation = "attackB"
+        
+        knight.in_menu = True
+        knight.direction = "right"
+        knight.rect.left = -200
+        knight.rect.top = -150
+        eyeEnemy.rect.left = 100
+        eyeEnemy.rect.top = 100
+
+        printg(f"Player HP: {knight.hp}", sWidth // 4, sHeight - 100, (255,0,0))
+        printg(f"Player SP: {knight.sp}", sWidth // 4, sHeight - 50, (0,255,0))
+
+        playerGroup.draw(screen)
+        playerGroup.update(screen)
+        eyeEnemy.update(screen)
+        clock.tick(60)
+        pygame.display.flip()
+
+
 
     def game(self):
-        global music_playing, game_paused, bgv, fgv
+        global music_playing, game_paused, bgv, fgv, enemiesOW
 
-        options_menu = ["resume", "main menu", "settings", "quit"]
+        options_menu = ["resume", "main menu", "toggle debug commands", "enter battle", "quit"]
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
@@ -352,8 +483,10 @@ class Game():
                     self.current_scene = "debug"
                 if event.key == pygame.K_RIGHT:
                     knight.RIGHT = False
+                    knight.current_animation = "idle"
                 if event.key == pygame.K_LEFT:
                     knight.LEFT = False
+                    knight.current_animation = "idle"
                 if event.key == pygame.K_UP:
                     knight.UP = False
                     if knight.paused:
@@ -371,7 +504,11 @@ class Game():
                     if options_menu[self.menu_option] == "settings":
                         self.current_scene = "settings"
                     if options_menu[self.menu_option] == "main menu":
+                        self.menu_option = 0
                         self.current_scene = "menu"
+                    if options_menu[self.menu_option] == "enter battle":
+                        self.menu_option = 0
+                        self.current_scene = "battle"
                     if knight.paused == True:
                         knight.paused = False
                         knight.last_pause = pygame.time.get_ticks()
@@ -402,9 +539,15 @@ class Game():
         knight.update(screen)
         objGroup.draw(screen)
         objGroup.update(screen)
+        for shadow in enemiesOW:
+            shadow.update()
 
         playerGroup.draw(screen)
         playerGroup.update(screen)
+        # hb.update(screen)
+        cursorGroup.update(screen)
+
+        # hb.update(screen)
 
         if not knight.paused:
             printg("game", sWidth-270, 0, (255, 0, 0))
@@ -414,7 +557,7 @@ class Game():
                 if self.menu_option == item:
                     printg(options_menu[item], sWidth // 2, item*100+200, (0, 255, 0))
                 else:
-                    printg(options_menu[item], sWidth // 2, item*100+200, (0, 0, 0))
+                    printg(options_menu[item], sWidth // 2, item*100+200, (255, 255, 255))
 
         clock.tick(60)
         pygame.display.flip()
@@ -426,13 +569,21 @@ class Game():
 eGroup = pygame.sprite.Group()
 objGroup = pygame.sprite.Group()
 playerGroup = pygame.sprite.Group()
+cursorGroup = pygame.sprite.Group()
+
 projectile = EyeProjectile()
 knight = Knight()
 eGroup.add(FlyingEye())
-eGroup.add(projectile)
-eGroup.add(knight)
+eyeEnemy = FlyingEye()
+# eGroup.add(projectile)
+# eGroup.add(knight)
 playerGroup.add(knight)
+hb = HealthBar(200, 200)
 objGroup.add(Wall())
+cursorGroup.add(Mouse())
+
+enemiesOW = []
+enemiesOW.append(EnemyShadow())
 
 g = Game()
 
