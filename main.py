@@ -903,13 +903,13 @@ class Game():
             knight.DOWN, knight.UP = True, False
             knight.current_animation = "run"
         elif "left" in frame_data:
-            knight.RIGHT, knight.LEFT = True, False
-            knight.current_animation = "run"
-            knight.direction = "right"
-        elif "right" in frame_data:
             knight.LEFT, knight.RIGHT = True, False
             knight.current_animation = "run"
             knight.direction = "left"
+        elif "right" in frame_data:
+            knight.RIGHT, knight.LEFT = True, False
+            knight.current_animation = "run"
+            knight.direction = "right"
         elif ("y" or "l1") in frame_data:
             knight.current_animation = "attackA"
         elif ("b" or "r1") in frame_data:
