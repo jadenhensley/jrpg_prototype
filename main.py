@@ -1,11 +1,20 @@
 from turtle import update
 import pygame, sys, random, path_util
+from pygame.locals import *
 from anim_data import animations
 from monsters_data import monsters
 
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
+
+pygame.joystick.init()
+joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
+for joystick in joysticks:
+    print(joystick.get_name())
+
+P1STR=""
+
 clock = pygame.time.Clock()
 sWidth, sHeight = 720, 480
 sWidth, sHeight = 1280, 720
@@ -55,6 +64,8 @@ parallax_background = [
 ]
 
 converted_layers = []
+
+frame_data = []
 
 for layer in parallax_background:
             temp = pygame.image.load(layer)
@@ -312,6 +323,8 @@ class Wall(pygame.sprite.Sprite):
         # if self.rect.bottom < knight.rect.top:
         #     knight.rect.top = self.rect.bottom
 
+
+
 class Game():
     def __init__(self):
         self.current_scene = "menu"
@@ -414,10 +427,14 @@ class Game():
 
     
 
+
     def battle(self):
         global music_playing, game_paused
+        global joysticks, P1STR
         player_commands = ["attack", "heal", "negotiate"]
         
+        frame_data = []
+
         screen.fill((20,20,20))
         for cmd in range(len(player_commands)):
             if cmd != self.menu_option:
@@ -428,6 +445,9 @@ class Game():
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
+
+        motion = [0,0]
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -462,7 +482,112 @@ class Game():
                     elif player_commands[self.menu_option] == "negotiate":
                         knight.current_animation = "attackB"
                         dragon.hp -= random.randint(1, knight.attack // 2)
+            if event.type == JOYDEVICEADDED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device added: {controllerName}")
+                print(joystick.get_instance_id())
+                joysticks = []
+                joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
                         
+                P1STR=joysticks[0].get_name()
+                print("player one: " + P1STR)
+                        
+
+            if event.type == JOYDEVICEREMOVED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device disconnected: {controllerName}")
+                motion = [0,0]
+            if event.type == JOYBUTTONDOWN:
+                pass
+            if event.type == JOYBUTTONUP:
+                print(event.button)
+                print(P1STR)
+                P1STR="Nintendo Switch"
+                if "Xbox" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("b")
+                    elif event.button == 1:
+                        frame_data.append("a")
+                    elif event.button == 2:
+                        frame_data.append("y")
+                    elif event.button == 3:
+                        frame_data.append("x")
+                    elif event.button == 4:
+                        frame_data.append("l1")
+                    elif event.button == 5:
+                        frame_data.append("r1")
+                    elif event.button == 6:
+                        frame_data.append("select")
+                    elif event.button == 7:
+                        frame_data.append("start")
+                if "Nintendo Switch" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("a")
+                    elif event.button == 1:
+                        frame_data.append("b")
+                    elif event.button == 2:
+                        frame_data.append("x")
+                    elif event.button == 3:
+                        frame_data.append("y")
+                    elif event.button == 4:
+                        frame_data.append("select")
+                    elif event.button == 5:
+                        frame_data.append("l1")
+                    elif event.button == 6:
+                        frame_data.append("start")
+                    elif event.button == 7:
+                        frame_data.append("l2")
+                    elif event.button == 8:
+                        frame_data.append("r2")
+                    elif event.button == 9:
+                        frame_data.append("l1")
+                    elif event.button == 10:
+                        frame_data.append("r1")
+                    elif event.button == 11:
+                        frame_data.append("up")
+                    elif event.button == 12:
+                        frame_data.append("down")
+                    elif event.button == 13:
+                        frame_data.append("left")
+                    elif event.button == 14:
+                        frame_data.append("right")
+
+            if event.type == JOYAXISMOTION:
+                # print(event.axis)
+                # print(event)
+                if event.axis < 2:
+                    motion[event.axis] = event.value
+                if 3 > event.axis > 2:
+                    motion[1] = event.value
+            if event.type == JOYHATMOTION:
+                print(event.value)
+                if "Xbox" in P1STR:
+                    if event.value == (-1,0):
+                        frame_data.append("left")
+                    elif event.value == (1, 0):
+                        frame_data.append("right")
+                    elif event.value == (0, -1):
+                        frame_data.append("down")
+                    elif event.value == (0, 1):
+                        frame_data.append("up")
+
+        if "a" in frame_data:
+            if player_commands[self.menu_option] == "attack":
+                knight.current_animation = "attackA"
+                dragon.hp -= random.randint(2, knight.attack)
+            elif player_commands[self.menu_option] == "heal":
+                knight.current_animation = "roll"
+                knight.hp += random.randint(1, knight.defense)
+            elif player_commands[self.menu_option] == "negotiate":
+                knight.current_animation = "attackB"
+                dragon.hp -= random.randint(1, knight.attack // 2)
+        elif "left" in frame_data:
+            if self.menu_option != 0:
+                self.menu_option -= 1         
+        elif "right" in frame_data:
+            if self.menu_option != len(player_commands)-1:
+                self.menu_option += 1
+ 
         
         knight.in_menu = True
         knight.direction = "right"
@@ -473,6 +598,8 @@ class Game():
         printg(f"Player SP: {knight.sp}", sWidth // 4, sHeight - 50, (0,255,0))
         printg(f"Enemy HP: {dragon.hp}", sWidth // 2 + 30, sHeight - 100, (255,0,0))
         printg(f"Enemy SP: {dragon.sp}", sWidth // 2 + 30, sHeight - 50, (0,255,0))
+        
+        printg(f"{frame_data}",0,200)
 
         if dragon.hp <= 0:
             knight.level += 1
@@ -497,6 +624,7 @@ class Game():
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
