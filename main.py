@@ -372,6 +372,8 @@ class Game():
     def menu(self):
         global music_playing; music_playing = 0; mixer.music.stop()
         global parallax_background, converted_layers
+        global joysticks, P1STR
+
         
         options = ['game', 'settings', 'debug']
         
@@ -393,6 +395,109 @@ class Game():
                 if event.key == pygame.K_RETURN:
                     knight.last_pause = pygame.time.get_ticks()
                     self.current_scene = options[self.menu_option]
+            if event.type == JOYDEVICEADDED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device added: {controllerName}")
+                print(joystick.get_instance_id())
+                joysticks = []
+                joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
+                        
+                P1STR=joysticks[0].get_name()
+                print("player one: " + P1STR)
+                        
+
+            if event.type == JOYDEVICEREMOVED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device disconnected: {controllerName}")
+                motion = [0,0]
+            if event.type == JOYBUTTONDOWN:
+                pass
+            if event.type == JOYBUTTONUP:
+                print(event.button)
+                print(P1STR)
+                P1STR="Nintendo Switch"
+                if "Xbox" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("b")
+                    elif event.button == 1:
+                        frame_data.append("a")
+                    elif event.button == 2:
+                        frame_data.append("y")
+                    elif event.button == 3:
+                        frame_data.append("x")
+                    elif event.button == 4:
+                        frame_data.append("l1")
+                    elif event.button == 5:
+                        frame_data.append("r1")
+                    elif event.button == 6:
+                        frame_data.append("select")
+                    elif event.button == 7:
+                        frame_data.append("start")
+                if "Nintendo Switch" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("a")
+                    elif event.button == 1:
+                        frame_data.append("b")
+                    elif event.button == 2:
+                        frame_data.append("x")
+                    elif event.button == 3:
+                        frame_data.append("y")
+                    elif event.button == 4:
+                        frame_data.append("select")
+                    elif event.button == 5:
+                        frame_data.append("l1")
+                    elif event.button == 6:
+                        frame_data.append("start")
+                    elif event.button == 7:
+                        frame_data.append("l2")
+                    elif event.button == 8:
+                        frame_data.append("r2")
+                    elif event.button == 9:
+                        frame_data.append("l1")
+                    elif event.button == 10:
+                        frame_data.append("r1")
+                    elif event.button == 11:
+                        frame_data.append("up")
+                    elif event.button == 12:
+                        frame_data.append("down")
+                    elif event.button == 13:
+                        frame_data.append("left")
+                    elif event.button == 14:
+                        frame_data.append("right")
+
+            if event.type == JOYAXISMOTION:
+                # print(event.axis)
+                # print(event)
+                if event.axis < 2:
+                    motion[event.axis] = event.value
+                if 3 > event.axis > 2:
+                    motion[1] = event.value
+            if event.type == JOYHATMOTION:
+                print(event.value)
+                if "Xbox" in P1STR:
+                    if event.value == (-1,0):
+                        frame_data.append("left")
+                    elif event.value == (1, 0):
+                        frame_data.append("right")
+                    elif event.value == (0, -1):
+                        frame_data.append("down")
+                    elif event.value == (0, 1):
+                        frame_data.append("up")
+
+        if "a" in frame_data:
+            knight.last_pause = pygame.time.get_ticks()
+            self.current_scene = options[self.menu_option]
+
+        elif "up" in frame_data:
+            knight.current_animation = "run"
+            if self.menu_option != 0:
+                self.menu_option -= 1
+        elif "down" in frame_data:
+            knight.current_animation = "roll"
+            if self.menu_option != len(options)-1:
+                self.menu_option += 1
+
+
 
         screen.fill((20,20,20))
         
@@ -434,6 +539,7 @@ class Game():
         player_commands = ["attack", "heal", "negotiate"]
         
         frame_data = []
+        motion = [0,0]
 
         screen.fill((20,20,20))
         for cmd in range(len(player_commands)):
@@ -624,6 +730,11 @@ class Game():
         if music_playing == 0:
             mixer.music.play()
             music_playing = 1
+
+        frame_data = []
+        motion = [0,0]
+        P1STR = ""
+
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -696,6 +807,119 @@ class Game():
                         if pygame.time.get_ticks() > knight.last_pause+360 and pygame.time.get_ticks() > 2000:
                             knight.paused = True
                             game_paused = True
+            if event.type == JOYDEVICEADDED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device added: {controllerName}")
+                print(joystick.get_instance_id())
+                joysticks = []
+                joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
+                        
+                P1STR=joysticks[0].get_name()
+                print("player one: " + P1STR)
+                        
+
+            if event.type == JOYDEVICEREMOVED:
+                controllerName = [joystick.get_name() for joystick in joysticks]
+                print(f"device disconnected: {controllerName}")
+                motion = [0,0]
+            if event.type == JOYBUTTONDOWN:
+                pass
+            if event.type == JOYBUTTONUP:
+                print(event.button)
+                print(P1STR)
+                P1STR="Nintendo Switch"
+                if "Xbox" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("b")
+                    elif event.button == 1:
+                        frame_data.append("a")
+                    elif event.button == 2:
+                        frame_data.append("y")
+                    elif event.button == 3:
+                        frame_data.append("x")
+                    elif event.button == 4:
+                        frame_data.append("l1")
+                    elif event.button == 5:
+                        frame_data.append("r1")
+                    elif event.button == 6:
+                        frame_data.append("select")
+                    elif event.button == 7:
+                        frame_data.append("start")
+                if "Nintendo Switch" in P1STR:
+                    if event.button == 0:
+                        frame_data.append("a")
+                    elif event.button == 1:
+                        frame_data.append("b")
+                    elif event.button == 2:
+                        frame_data.append("x")
+                    elif event.button == 3:
+                        frame_data.append("y")
+                    elif event.button == 4:
+                        frame_data.append("select")
+                    elif event.button == 5:
+                        frame_data.append("l1")
+                    elif event.button == 6:
+                        frame_data.append("start")
+                    elif event.button == 7:
+                        frame_data.append("l2")
+                    elif event.button == 8:
+                        frame_data.append("r2")
+                    elif event.button == 9:
+                        frame_data.append("l1")
+                    elif event.button == 10:
+                        frame_data.append("r1")
+                    elif event.button == 11:
+                        frame_data.append("up")
+                    elif event.button == 12:
+                        frame_data.append("down")
+                    elif event.button == 13:
+                        frame_data.append("left")
+                    elif event.button == 14:
+                        frame_data.append("right")
+
+            if event.type == JOYAXISMOTION:
+                # print(event.axis)
+                # print(event)
+                if event.axis < 2:
+                    motion[event.axis] = event.value
+                if 3 > event.axis > 2:
+                    motion[1] = event.value
+            if event.type == JOYHATMOTION:
+                print(event.value)
+                if "Xbox" in P1STR:
+                    if event.value == (-1,0):
+                        frame_data.append("left")
+                    elif event.value == (1, 0):
+                        frame_data.append("right")
+                    elif event.value == (0, -1):
+                        frame_data.append("down")
+                    elif event.value == (0, 1):
+                        frame_data.append("up")
+
+        if "up" in frame_data:
+            knight.UP, knight.DOWN = True, False
+            knight.current_animation = "run"
+        elif "down" in frame_data:
+            knight.DOWN, knight.UP = True, False
+            knight.current_animation = "run"
+        elif "left" in frame_data:
+            knight.RIGHT, knight.LEFT = True, False
+            knight.current_animation = "run"
+            knight.direction = "right"
+        elif "right" in frame_data:
+            knight.LEFT, knight.RIGHT = True, False
+            knight.current_animation = "run"
+            knight.direction = "left"
+        elif ("y" or "l1") in frame_data:
+            knight.current_animation = "attackA"
+        elif ("b" or "r1") in frame_data:
+            knight.current_animation = "attackB"
+        elif "a" in frame_data:
+            knight.current_animation = "roll"
+            if knight.direction == "right":
+                knight.rect.right += 150
+            if knight.direction == "left":
+                knight.rect.left -= 150
 
         if knight.rect.left < -100:
             knight.rect.left = -100
