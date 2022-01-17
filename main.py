@@ -128,6 +128,7 @@ class Knight(pygame.sprite.Sprite):
         self.sp = 42
         self.attack = 9
         self.defense = 30
+        self.level = 0
 
     def update(self, surface):
         if self.paused:
@@ -237,6 +238,17 @@ class Dragon(pygame.sprite.Sprite):
         printg(f"tick: {current_time}",0,0)
         if current_time % 100 == 0:
             knight.hp -= random.randint(4, self.attack)
+
+    def reset(self):
+        self.name = random.choice(("dragon0","dragon1","dragon2","dragon3","dragon4","dragon5","dragon6","dragon7","dragon8","dragon9","dragon10"))
+        self.image = pygame.image.load(monsters[self.name]["sprite"])
+        self.rect = self.image.get_rect()
+        self.image = pygame.transform.scale(self.image, (self.image.get_width()*4, self.image.get_height()*4))
+        self.image = pygame.transform.flip(self.image, True, False)
+        self.hp = monsters[self.name]["stats"]["hp"]
+        self.sp = monsters[self.name]["stats"]["sp"]
+        self.attack = monsters[self.name]["stats"]["attack"]
+        self.defense = monsters[self.name]["stats"]["defense"]
         
 
 class FlyingEye(pygame.sprite.Sprite):
@@ -380,7 +392,7 @@ class Game():
         
         playerGroup.draw(screen)
         playerGroup.update(screen)
-        knight.update(screen)
+        # screen.blit(knight.image, knight.rect.center)
         knight.rect.right = 0
         knight.rect.bottom = 0
         knight.in_menu = True
@@ -456,6 +468,11 @@ class Game():
         printg(f"Player SP: {knight.sp}", sWidth // 4, sHeight - 50, (0,255,0))
         printg(f"Enemy HP: {dragon.hp}", sWidth // 2 + 30, sHeight - 100, (255,0,0))
         printg(f"Enemy SP: {dragon.sp}", sWidth // 2 + 30, sHeight - 50, (0,255,0))
+
+        if dragon.hp <= 0:
+            knight.level += 1
+            self.current_scene = "game"
+            dragon.reset()
 
 
         playerGroup.draw(screen)
@@ -575,8 +592,12 @@ class Game():
 
         # hb.update(screen)
 
+        printg(f"level: {knight.level}", 30, 10)
+
         if not knight.paused:
             printg("game", sWidth-270, 0, (255, 0, 0))
+            if pygame.time.get_ticks() % 100 == 0:
+                self.current_scene = "battle"
         else:
             printgLarge("Game Paused", sWidth//4-30, 0, (0, 255, 0))
             for item in range(len(options_menu)):
