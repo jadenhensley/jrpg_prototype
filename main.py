@@ -30,6 +30,11 @@ debug_enabled = 0
 floor_image = pygame.image.load(f"{PROJECT_PATH}/sprites/level/floor.png")
 floor_image = pygame.transform.scale(floor_image, (floor_image.get_width()*100, floor_image.get_height()*100))
 
+summon_sound = pygame.mixer.Sound(f"{PROJECT_PATH}/sounds/summon.wav")
+summon_sound.set_volume(0.555)
+select_sound = pygame.mixer.Sound(f"{PROJECT_PATH}/sounds/select.wav")
+select_sound.set_volume(0.555)
+
 def printg(text, x, y, color=(255,255,255)):
     text = monogram.render(text, True, color)
     screen.blit(text, (x, y))
@@ -541,6 +546,7 @@ class Game():
                         if self.menu_option != len(options_menu)-1:
                             self.menu_option += 1
                 if event.key == pygame.K_RETURN:
+                    select_sound.play()
                     if options_menu[self.menu_option] == "quit":
                         pygame.quit()
                         sys.exit()
@@ -551,6 +557,7 @@ class Game():
                         self.current_scene = "menu"
                     if options_menu[self.menu_option] == "enter battle":
                         self.menu_option = 0
+                        summon_sound.play()
                         self.current_scene = "battle"
                     if knight.paused == True:
                         knight.paused = False
@@ -600,6 +607,7 @@ class Game():
                 # screen transitions
                 for i in range(2000):
                     screen.fill((i%255,i%255,i%255))
+                summon_sound.play()
                 self.current_scene = "battle"
         else:
             printgLarge("Game Paused", sWidth//4-30, 0, (0, 255, 0))
