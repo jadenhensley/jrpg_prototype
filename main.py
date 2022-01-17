@@ -245,8 +245,8 @@ class Dragon(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.image = pygame.transform.scale(self.image, (self.image.get_width()*4, self.image.get_height()*4))
         self.image = pygame.transform.flip(self.image, True, False)
-        self.hp = monsters[self.name]["stats"]["hp"]
-        self.sp = monsters[self.name]["stats"]["sp"]
+        self.hp = monsters[self.name]["stats"]["hp"] + 15 * knight.level
+        self.sp = monsters[self.name]["stats"]["sp"] + 4 * knight.level
         self.attack = monsters[self.name]["stats"]["attack"]
         self.defense = monsters[self.name]["stats"]["defense"]
         
@@ -592,11 +592,14 @@ class Game():
 
         # hb.update(screen)
 
-        printg(f"level: {knight.level}", 30, 10)
+        printgLarge(f"level: {knight.level}", sWidth // 4 -300, sHeight - 160)
 
         if not knight.paused:
             printg("game", sWidth-270, 0, (255, 0, 0))
             if pygame.time.get_ticks() % 100 == 0:
+                # screen transitions
+                for i in range(2000):
+                    screen.fill((i%255,i%255,i%255))
                 self.current_scene = "battle"
         else:
             printgLarge("Game Paused", sWidth//4-30, 0, (0, 255, 0))
