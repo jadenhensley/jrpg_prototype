@@ -415,7 +415,7 @@ class Game():
             if event.type == JOYBUTTONUP:
                 print(event.button)
                 print(P1STR)
-                P1STR="Nintendo Switch"
+                P1STR="Xbox"
                 if "Xbox" in P1STR:
                     if event.button == 0:
                         frame_data.append("b")
@@ -608,7 +608,7 @@ class Game():
             if event.type == JOYBUTTONUP:
                 print(event.button)
                 print(P1STR)
-                P1STR="Nintendo Switch"
+                P1STR="Xbox"
                 if "Xbox" in P1STR:
                     if event.button == 0:
                         frame_data.append("b")
@@ -827,7 +827,7 @@ class Game():
             if event.type == JOYBUTTONUP:
                 print(event.button)
                 print(P1STR)
-                P1STR="Nintendo Switch"
+                P1STR="Xbox"
                 if "Xbox" in P1STR:
                     if event.button == 0:
                         frame_data.append("b")
