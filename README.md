@@ -12,7 +12,7 @@ A simple JRPG prototype I made over the weekend.
 
 Includes:
 - *Overworld movement, inspired by Dark Souls*
-- *Turn-Based Battle mechanics, inspired by Pokemon and Chrono Trigger and Final Fantasy*
+- *Turn-Based Battle mechanics, inspired by Final Fantasy*
 - *Menu Screens*
 - *Animations*
 
