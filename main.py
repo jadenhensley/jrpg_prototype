@@ -19,7 +19,7 @@ clock = pygame.time.Clock()
 sWidth, sHeight = 720, 480
 sWidth, sHeight = 1280, 720
 screen = pygame.display.set_mode((sWidth, sHeight))
-pygame.display.set_caption("Turn based JRPG prototype")
+pygame.display.set_caption("Turn based JRPG prototype by @jadenhensley (GitHub)")
 PROJECT_PATH = path_util.get_project_directory()
 
 monogram = pygame.font.Font(f"{PROJECT_PATH}/font/monogram.ttf", 54)
@@ -946,6 +946,7 @@ class Game():
 
         playerGroup.draw(screen)
         playerGroup.update(screen)
+                
         # hb.update(screen)
         cursorGroup.update(screen)
 
